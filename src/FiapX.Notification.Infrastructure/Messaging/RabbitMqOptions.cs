@@ -6,9 +6,9 @@ public sealed class RabbitMqOptions
 {
     public const string Section = "RabbitMq";
 
-    /// <summary>amqp://user:password@host:5672/vhost</summary>
+    /// <summary>amqp://user:password@host:5672/vhost. Credentials come from the environment, never from appsettings.</summary>
     [Required]
-    public string Uri { get; set; } = "amqp://guest:guest@localhost:5672/";
+    public string Uri { get; set; } = "amqp://localhost:5672/";
 
     /// <summary>Name recorded in the inbox and shown as the connection name in RabbitMQ.</summary>
     [Required]

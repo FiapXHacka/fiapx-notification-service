@@ -62,8 +62,8 @@ db/schema.sql                          DDL equivalente à migration InitialCreat
 
 | Variável | Padrão (`appsettings.json`) | Descrição |
 |---|---|---|
-| `ConnectionStrings__Postgres` | `Host=localhost;…;Database=notification_db` | Banco do serviço |
-| `RabbitMq__Uri` | `amqp://guest:guest@localhost:5672/` | Broker |
+| `ConnectionStrings__Postgres` | `Host=localhost;…;Database=notification_db` (sem senha) | Banco do serviço; a senha vem só do ambiente (`…;Password=…`) |
+| `RabbitMq__Uri` | `amqp://localhost:5672/` | Broker; usuário e senha vêm do ambiente (`amqp://user:pass@host/`) |
 | `RabbitMq__Queue` | `notification-service.events` | Fila consumida |
 | `RabbitMq__DeliveryLimit` | `5` | Entregas antes da DLQ |
 | `RabbitMq__Prefetch` | `10` | Mensagens em voo por consumidor |

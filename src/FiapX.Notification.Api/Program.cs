@@ -24,6 +24,3 @@ app.UseAuthorization();
 app.MapHealthEndpoints();
 
 await app.RunAsync();
-
-/// <summary>Entry point, public so WebApplicationFactory can host the API in integration tests.</summary>
-public partial class Program;
