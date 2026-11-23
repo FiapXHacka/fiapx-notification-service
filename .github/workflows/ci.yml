@@ -51,17 +51,18 @@ jobs:
           /o:"${{ steps.sonar.outputs.organization }}"
           /d:sonar.host.url="https://sonarcloud.io"
           /d:sonar.token="${SONAR_TOKEN}"
-          /d:sonar.cs.vscoveragexml.reportsPaths="**/TestResults/**/*.xml"
+          /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
           /d:sonar.coverage.exclusions="**/Program.cs,**/Migrations/**"
           /d:sonar.cpd.exclusions="**/Migrations/**"
 
       - run: dotnet build FiapX.Notification.slnx -c Release --no-incremental
 
-      # Microsoft.Testing.Platform (global.json); coverage in the VS XML format that Sonar reads.
       - name: Test (unit + integration with Testcontainers)
         run: >
-          dotnet test --solution FiapX.Notification.slnx -c Release --no-build
-          --coverage --coverage-output-format xml
+          dotnet test FiapX.Notification.slnx -c Release --no-build
+          --settings coverlet.runsettings
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
 
       - name: Sonar end
         run: dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"

@@ -13,6 +13,8 @@
 
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
     <IsPackable>false</IsPackable>
+    <!-- Run through VSTest so the coverlet collector (OpenCover for Sonar) keeps working, as in the other services. -->
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
     <!-- Test method names use underscores; async tests do not need ConfigureAwait. -->
     <NoWarn>$(NoWarn);CA1707;CA2007;CA1515;CA1861;CA2234;CA1711;CA1869;xUnit1051</NoWarn>
   </PropertyGroup>
