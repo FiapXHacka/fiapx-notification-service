@@ -1,0 +1,11 @@
+bin/
+obj/
+TestResults/
+.sonarqube/
+coverage*.xml
+*.user
+.vs/
+.idea/
+.vscode/
+.DS_Store
+.env
