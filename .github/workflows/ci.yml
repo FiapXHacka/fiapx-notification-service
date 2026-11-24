@@ -57,6 +57,17 @@ jobs:
 
       - run: dotnet build FiapX.Notification.slnx -c Release --no-incremental
 
+      # EF Core migrations are the source of truth (ADR-0009): fail if the model has changes without a migration,
+      # or if db/schema.sql (the delivered script) is not the output of the current migrations.
+      - name: Check migrations and db/schema.sql
+        run: |
+          dotnet tool restore
+          dotnet ef migrations has-pending-model-changes ${EF_PROJECT} --no-build --configuration Release
+          dotnet ef migrations script --idempotent ${EF_PROJECT} --no-build --configuration Release --output db/schema.sql
+          git diff --exit-code db/schema.sql
+        env:
+          EF_PROJECT: -p src/FiapX.Notification.Infrastructure -s src/FiapX.Notification.Infrastructure
+
       - name: Test (unit + integration with Testcontainers)
         run: >
           dotnet test FiapX.Notification.slnx -c Release --no-build
