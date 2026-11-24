@@ -2,33 +2,36 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FiapX.Notification.Api.Auth;
 
+/// <summary>Canonical Auth keys shared by the .NET services (ADR-0011).</summary>
 public sealed class AuthOptions
 {
     public const string Section = "Auth";
 
-    /// <summary>identity-service JWKS, e.g. http://identity-service:8080/.well-known/jwks.json</summary>
+    /// <summary>Public issuer URL, as written in the token's iss claim (e.g. http://localhost:8080 through the gateway).</summary>
     [Required]
-    public string JwksUrl { get; set; } = string.Empty;
-
-    [Required]
+    [Url]
     public string Issuer { get; set; } = string.Empty;
 
     [Required]
     public string Audience { get; set; } = "fiapx-api";
 
-    /// <summary>Inside the cluster/compose the JWKS is fetched over plain HTTP.</summary>
+    /// <summary>OIDC discovery document reachable by this service, e.g. http://identity-service:8080/.well-known/openid-configuration.</summary>
+    [Required]
+    [Url]
+    public string MetadataAddress { get; set; } = string.Empty;
+
+    /// <summary>True by default; false only locally (Development, docker-compose).</summary>
     public bool RequireHttpsMetadata { get; set; } = true;
 }
 
 /// <summary>
-/// Validates RS256 access tokens issued by the identity-service (ADR-0011). Every endpoint requires an
-/// authenticated user unless it opts out with AllowAnonymous (health checks do).
+/// Validates RS256 access tokens issued by the identity-service. Signing keys come from its OIDC discovery
+/// document (jwks_uri), cached and refreshed by the JwtBearer handler, which supports key rotation by kid.
+/// Every endpoint requires an authenticated user unless it opts out with AllowAnonymous (health checks do).
 /// </summary>
 public static class JwtAuthentication
 {
@@ -51,8 +54,9 @@ public static class JwtAuthentication
 
     internal static void Configure(JwtBearerOptions jwt, AuthOptions auth)
     {
-        jwt.MapInboundClaims = false;
+        jwt.MetadataAddress = auth.MetadataAddress;
         jwt.RequireHttpsMetadata = auth.RequireHttpsMetadata;
+        jwt.MapInboundClaims = false;
         jwt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidIssuer = auth.Issuer,
@@ -62,31 +66,5 @@ public static class JwtAuthentication
             NameClaimType = "name",
             ClockSkew = TimeSpan.FromSeconds(30),
         };
-        jwt.ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-            auth.JwksUrl,
-            new JwksConfigurationRetriever(),
-            new HttpDocumentRetriever { RequireHttps = auth.RequireHttpsMetadata });
-    }
-}
-
-/// <summary>
-/// The identity-service publishes only a JWKS document (no OpenID discovery), so the signing keys are read
-/// straight from it. The ConfigurationManager caches and refreshes them, which supports key rotation by kid.
-/// </summary>
-internal sealed class JwksConfigurationRetriever : IConfigurationRetriever<OpenIdConnectConfiguration>
-{
-    public async Task<OpenIdConnectConfiguration> GetConfigurationAsync(
-        string address, IDocumentRetriever retriever, CancellationToken cancel)
-    {
-        ArgumentNullException.ThrowIfNull(retriever);
-        var json = await retriever.GetDocumentAsync(address, cancel);
-        var keySet = new JsonWebKeySet(json);
-        var configuration = new OpenIdConnectConfiguration();
-        foreach (var key in keySet.GetSigningKeys())
-        {
-            configuration.SigningKeys.Add(key);
-        }
-
-        return configuration;
     }
 }
