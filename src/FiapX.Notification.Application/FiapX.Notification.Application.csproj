@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\FiapX.Notification.Domain\FiapX.Notification.Domain.csproj" />
+  </ItemGroup>
+</Project>

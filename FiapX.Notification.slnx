@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FiapX.Notification.Domain/FiapX.Notification.Domain.csproj" />
+    <Project Path="src/FiapX.Notification.Application/FiapX.Notification.Application.csproj" />
+    <Project Path="src/FiapX.Notification.Infrastructure/FiapX.Notification.Infrastructure.csproj" />
+    <Project Path="src/FiapX.Notification.Api/FiapX.Notification.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FiapX.Notification.UnitTests/FiapX.Notification.UnitTests.csproj" />
+    <Project Path="tests/FiapX.Notification.IntegrationTests/FiapX.Notification.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
