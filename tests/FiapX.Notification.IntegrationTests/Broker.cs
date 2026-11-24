@@ -54,8 +54,24 @@ internal sealed class Broker : IAsyncDisposable
     public Task PublishRawToQueueAsync(string queue, string body) =>
         PublishAsync(string.Empty, queue, Encoding.UTF8.GetBytes(body));
 
-    public async Task<uint> MessageCountAsync(string queue) =>
-        (await _channel.QueueDeclarePassiveAsync(queue)).MessageCount;
+    public async Task<QueueDeclareOk> InspectAsync(string queue) => await _channel.QueueDeclarePassiveAsync(queue);
+
+    public async Task<uint> MessageCountAsync(string queue) => (await InspectAsync(queue)).MessageCount;
+
+    /// <summary>Reads (and acks) dead-lettered messages until one with the given CloudEvent id shows up.</summary>
+    public async Task<bool> DeadLetteredAsync(string deadLetterQueue, Guid messageId)
+    {
+        while (await _channel.BasicGetAsync(deadLetterQueue, autoAck: true) is { } result)
+        {
+            using var json = JsonDocument.Parse(result.Body);
+            if (json.RootElement.TryGetProperty("id", out var id) && id.GetString() == messageId.ToString())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public async Task WaitForQueueAsync(string queue, TimeSpan timeout)
     {

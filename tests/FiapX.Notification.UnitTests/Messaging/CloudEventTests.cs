@@ -80,6 +80,17 @@ public class CloudEventTests
             ProcessingFailedExample.Replace("\"data\": {", "\"data\": null, \"ignored\": {", StringComparison.Ordinal),
             CloudEventJson.Options)!;
 
-        Should.Throw<JsonException>(() => new IntegrationEvent(envelope).GetData<ProcessingFailedData>());
+        Should.Throw<InvalidMessageDataException>(() => new IntegrationEvent(envelope).GetData<ProcessingFailedData>());
+    }
+
+    [Fact]
+    public void GetData_DataOutsideTheContract_IsInvalidMessageData()
+    {
+        var envelope = JsonSerializer.Deserialize<CloudEvent<JsonElement>>(
+            ProcessingFailedExample.Replace("\"attempt\": 1", "\"attempt\": \"first\"", StringComparison.Ordinal),
+            CloudEventJson.Options)!;
+
+        var ex = Should.Throw<InvalidMessageDataException>(() => new IntegrationEvent(envelope).GetData<ProcessingFailedData>());
+        ex.InnerException.ShouldBeOfType<JsonException>();
     }
 }

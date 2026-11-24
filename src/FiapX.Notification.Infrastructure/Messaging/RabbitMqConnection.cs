@@ -37,7 +37,7 @@ public sealed class RabbitMqConnection(IOptions<RabbitMqOptions> options) : IAsy
             var factory = new ConnectionFactory
             {
                 Uri = new Uri(options.Value.Uri),
-                ClientProvidedName = options.Value.ConsumerName,
+                ClientProvidedName = options.Value.ClientName,
                 AutomaticRecoveryEnabled = false,
             };
             _connection = await factory.CreateConnectionAsync(cancellationToken);

@@ -50,9 +50,20 @@ public sealed record IntegrationEvent(CloudEvent<JsonElement> Envelope)
     public Guid Id => Envelope.Id;
     public string Type => Envelope.Type;
 
-    public TData GetData<TData>() =>
-        Envelope.Data.Deserialize<TData>(CloudEventJson.Options)
-        ?? throw new JsonException($"Event {Id} ({Type}) has empty data.");
+    /// <summary>Reads the data as <typeparamref name="TData"/>; unreadable data is a permanent failure.</summary>
+    /// <exception cref="InvalidMessageDataException">The data is missing or does not match the contract.</exception>
+    public TData GetData<TData>()
+    {
+        try
+        {
+            return Envelope.Data.Deserialize<TData>(CloudEventJson.Options)
+                ?? throw new InvalidMessageDataException($"Event {Id} ({Type}) has empty data.");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidMessageDataException($"Event {Id} ({Type}) has data that does not match the contract.", ex);
+        }
+    }
 }
 
 public static class CloudEventJson

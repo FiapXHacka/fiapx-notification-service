@@ -29,10 +29,8 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<RabbitMqConnection>();
         services.AddSingleton<MessageDispatcher>();
-        if (configuration.GetValue($"{RabbitMqOptions.Section}:{nameof(RabbitMqOptions.ConsumerEnabled)}", true))
-        {
-            services.AddHostedService<RabbitMqConsumer>();
-        }
+        // Starts consuming only if at least one IIntegrationEventHandler is registered (see RabbitMqConsumer).
+        services.AddHostedService<RabbitMqConsumer>();
 
         services.AddHealthChecks()
             .AddDbContextCheck<NotificationDbContext>("postgres", tags: [ReadyTag])
@@ -41,7 +39,10 @@ public static class DependencyInjection
         return services;
     }
 
-    /// <summary>Applies pending EF Core migrations (enabled with Database:MigrateOnStartup, e.g. in docker-compose).</summary>
+    /// <summary>
+    /// Applies pending EF Core migrations (Database:MigrateOnStartup, e.g. in docker-compose). Safe with several replicas
+    /// starting together: EF Core 9+ takes a migration lock, implemented by Npgsql (NpgsqlMigrationDatabaseLock).
+    /// </summary>
     public static async Task MigrateDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
